@@ -1,4 +1,5 @@
 import os
+import nltk
 
 class CorpusReader:
     """Read the contents of a directory of files, and return the results as
@@ -9,7 +10,7 @@ class CorpusReader:
 
     >>> reader = CorpusReader(r"path/to/dir")
     """
-    def __init__(self, directory):
+    def __init__(self, directory: str):
        if os.path.isdir(directory):
            self.path = directory
        else:
@@ -30,12 +31,12 @@ class CorpusReader:
 
     def sents(self):
         wordString = self._get_all_text()
-        sents = re.split('(\.)|(!)|(\?)|(;)', wordString)
+        sents = nltk.sent_tokenize(wordString)
         return sents
     
     def words(self) -> list:
         wordstring = self._get_all_text()
-        words = wordstring.split()
+        words = nltk.word_tokenize(wordstring)
         return words
 
     def lines(self) -> list:
