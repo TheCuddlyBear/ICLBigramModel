@@ -27,6 +27,11 @@ class CorpusReader:
             with open(path, 'r') as f:
                 wordstring += f.read()
         return wordstring
+
+    def sents(self):
+        wordString = self._get_all_text()
+        sents = re.split('(\.)|(!)|(\?)|(;)', wordString)
+        return sents
     
     def words(self) -> list:
         wordstring = self._get_all_text()
