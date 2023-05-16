@@ -1,4 +1,5 @@
 import math
+import pickle
 import re
 import pandas as pd
 from collections import Counter
@@ -6,19 +7,26 @@ from tqdm import tqdm
 
 
 class BigramModel:
-    def __init__(self, tokens: list):
+    def __init__(self, tokens: list, bigram_table=None, unigram_table=None, from_json=False):
         if (tokens == None):
             print("Tokens cannot be null!")
         else:
-            self.tokens: list = BigramModel.add_sentence_boundaries(tokens)
-            _unigram_counts = BigramModel.make_count_unigrams(self.tokens)
-            _unigram_counts_tuples = _unigram_counts.most_common(len(_unigram_counts))
-            self.unigram_frequency_table = pd.DataFrame(_unigram_counts_tuples, columns=['unigram', 'count'])
+            self.tokens: list = BigramModel.add_sentence_boundaries(tokens) if not from_json else tokens
+            _unigram_counts = BigramModel.make_count_unigrams(self.tokens) if not from_json else None
+            _unigram_counts_tuples = _unigram_counts.most_common(len(_unigram_counts)) if not from_json else None
+            self.unigram_frequency_table = pd.DataFrame(_unigram_counts_tuples, columns=['unigram', 'count']) if not from_json else unigram_table
             self.unigram_frequency_table.drop(
-                self.unigram_frequency_table[self.unigram_frequency_table['unigram'] == '</s>'].index, inplace=True)
-            _bigram_counts = BigramModel.make_count_bigrams(self.tokens)
-            _bigram_count_tuples = _bigram_counts.most_common(len(_bigram_counts))
-            self.bigram_frequency_table = pd.DataFrame(_bigram_count_tuples, columns=['bigram', 'count'])
+                self.unigram_frequency_table[self.unigram_frequency_table['unigram'] == '</s>'].index, inplace=True) if not from_json else None
+            _bigram_counts = BigramModel.make_count_bigrams(self.tokens) if not from_json else None
+            _bigram_count_tuples = _bigram_counts.most_common(len(_bigram_counts)) if not from_json else None
+            self.bigram_frequency_table = pd.DataFrame(_bigram_count_tuples, columns=['bigram', 'count']) if not from_json else bigram_table
+    def __setstate__(self, state):
+        self.unigram_frequency_table = pd.DataFrame.from_dict(state['unigram_pickle'])
+        self.bigram_frequency_table = pd.DataFrame.from_dict(state['bigram_pickle'])
+        self.tokens = state['tokens']
+    def __getstate__(self):
+        dict = {'bigram_pickle': self.bigram_frequency_table.to_dict(), 'unigram_pickle': self.unigram_frequency_table.to_dict(), 'tokens': self.tokens}
+        return dict
 
     def probability(self, w: str, w_n: str, smoothing_constant: float = 0.0):
         """
@@ -61,6 +69,15 @@ class BigramModel:
 
     def choose_successor(self, word: str, smoothing_constant: float = 0.0) -> str | None:
         pass
+
+    def save_model(self, location: str):
+        with open(location, 'wb') as f:
+            pickle.dump(self, f)
+
+    @staticmethod
+    def load_model(location: str) -> BigramModel:
+        with open(location, 'rb') as f:
+            return pickle.load(f)
 
     @staticmethod
     def make_count_unigrams(tokens: list) -> Counter:
