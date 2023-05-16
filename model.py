@@ -1,3 +1,4 @@
+import math
 import re
 import pandas as pd
 from collections import Counter
@@ -28,11 +29,13 @@ class BigramModel:
         """
         bigram: tuple = (w, w_n)
         try:
-            bigram_count = self.bigram_frequency_table.loc[self.bigram_frequency_table['bigram'] == bigram]['count'].tolist()[0]
+            bigram_count = \
+            self.bigram_frequency_table.loc[self.bigram_frequency_table['bigram'] == bigram]['count'].tolist()[0]
         except:
             return 0.0
         try:
-            unigram_count = self.unigram_frequency_table.loc[self.unigram_frequency_table['unigram'] == w_n]['count'].tolist()[0]
+            unigram_count = \
+            self.unigram_frequency_table.loc[self.unigram_frequency_table['unigram'] == w_n]['count'].tolist()[0]
         except:
             return 0.0
         if smoothing_constant == 0.0:
@@ -42,12 +45,19 @@ class BigramModel:
             total_words = len(self.unigram_frequency_table)
             t = bigram_count + smoothing_constant
             n = unigram_count + smoothing_constant * total_words
-            return t/n
+            return t / n
 
-
-
-    def perplexity(self, sent: list, smoothing_constant: float = 1.0) -> float | None:
-        pass
+    def perplexity(self, sent: list, smoothing_constant: float = 1.0) -> float:
+        sentCopy = sent.copy()
+        sentCopy.remove('</s>')
+        n = len(sentCopy)
+        probs = []
+        for i in range(n - 1):
+            probability = self.probability(sentCopy[i], sentCopy[i + 1], smoothing_constant)
+            q = 1 / probability
+            probs.append(q)
+        s = math.prod(probs)
+        return s ** (1 / n)
 
     def choose_successor(self, word: str, smoothing_constant: float = 0.0) -> str | None:
         pass
