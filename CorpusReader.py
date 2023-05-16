@@ -27,7 +27,8 @@ class CorpusReader:
             path = self.path + '/' + filename
             with open(path, 'r') as f:
                 wordstring += f.read()
-        return wordstring
+        wordsStringOneLine = wordstring.replace('\n', ' ').replace('  ', ' ')
+        return wordsStringOneLine
 
     def sents(self):
         wordString = self._get_all_text()
