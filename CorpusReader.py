@@ -30,10 +30,14 @@ class CorpusReader:
         wordsStringOneLine = wordstring.replace('\n', ' ').replace('  ', ' ')
         return wordsStringOneLine
 
-    def sents(self):
+    def sents(self) -> list:
+        toReturn: list = []
         wordString = self._get_all_text()
         sents = nltk.sent_tokenize(wordString)
-        return sents
+        for i in sents:
+            words = nltk.word_tokenize(i)
+            toReturn.append(words)
+        return toReturn
     
     def words(self) -> list:
         wordstring = self._get_all_text()
