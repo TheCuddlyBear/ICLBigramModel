@@ -17,22 +17,30 @@ class BigramModel:
     def probability(self, w: str, w_n: str, smooth_constant: float = 0.0) -> float:
         pass
 
-    def perplexity(self, sent: list, smoothing_constant: float = 0.0) -> float:
+    def perplexity(self, sent: list, smoothing_constant: float = 1.0) -> float:
         pass
 
     def choose_successor(self, word: str, smooth_constant: float = 0.0) -> str:
         pass
 
     def _make_count_bigrams(self, tokens: list) -> Counter:
+        """
+        @param tokens: list of tokenized sentences
+        Takes a list of tokenized sentences and generates the appropriate bigrams and counts them
+        """
         bigram_counts = Counter()
         for p, words in enumerate(tqdm(tokens, ncols=100, desc='Making and counting Bigrams')):
             bigrams: list = []
             for i in range(len(words) - 1):
-                bigrams.append(words[i] + " " + words[i + 1])
+                bigrams.append((words[i], words[i + 1]))
             bigram_counts += Counter(bigrams)
         return bigram_counts
 
     def _add_sentence_boundaries(self, tokens: list) -> list:
+        """
+        @param tokens: list of tokenized sentences
+        Takes a list of tokenized sentences and adds sentence boundaries to all the sentences
+        """
         tokens_without_punctuation = self._remove_punctuation_tokens(tokens)
         tokens_with_boundaries: list = []
         item: list
@@ -43,6 +51,10 @@ class BigramModel:
         return tokens_with_boundaries
 
     def _remove_punctuation_tokens(self, tokens: list):
+        """
+        @param tokens: list of tokenized sentences
+        Takes a list of tokenized sentences and removes the tokens that solemnly consist of punctuation from the list
+        """
         to_return: list = []
         for sent in tokens:
             to_return.append([p.lower() for p in sent if not re.match('\W', p)])
