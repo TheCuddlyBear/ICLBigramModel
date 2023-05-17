@@ -87,7 +87,7 @@ class BigramModel:
         """
         totWords: list = []
         for p, words in enumerate(
-                tqdm(tokens, ncols=100, desc='Making and counting Unigrams')):  # tqdm prints a progressbar
+                tqdm(tokens, ncols=100, desc='Counting Unigrams')):  # tqdm prints a progressbar
             for word in words:
                 totWords.append(word)
         return Counter(totWords)
@@ -98,9 +98,8 @@ class BigramModel:
         @param tokens: list of tokenized sentences
         Takes a list of tokenized sentences and generates the appropriate bigrams and counts them
         """
-        #bigram_counts = Counter()
         bigrams: list = []
-        for p, words in enumerate(tqdm(tokens, ncols=100, desc='Making and counting Bigrams')):  # tqdm prints a progressbar
+        for p, words in enumerate(tqdm(tokens, ncols=100, desc='Counting Bigrams')):  # tqdm prints a progressbar
             for i in range(len(words) - 1):
                 bigrams.append((words[i], words[i + 1]))
         return Counter(bigrams)
