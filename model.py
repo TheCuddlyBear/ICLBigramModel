@@ -75,7 +75,7 @@ class BigramModel:
             pickle.dump(self, f)
 
     @staticmethod
-    def load_model(location: str) -> BigramModel:
+    def load_model(location: str):
         with open(location, 'rb') as f:
             return pickle.load(f)
 
@@ -85,11 +85,12 @@ class BigramModel:
         @param tokens: list of tokenized sentences
         Takes a list of tokenized sentences and generates the appropriate unigrams and counts them
         """
-        unigram_counts = Counter()
+        totWords: list = []
         for p, words in enumerate(
                 tqdm(tokens, ncols=100, desc='Making and counting Unigrams')):  # tqdm prints a progressbar
-            unigram_counts += Counter(words)
-        return unigram_counts
+            for word in words:
+                totWords.append(word)
+        return Counter(totWords)
 
     @staticmethod
     def make_count_bigrams(tokens: list) -> Counter:
@@ -97,14 +98,12 @@ class BigramModel:
         @param tokens: list of tokenized sentences
         Takes a list of tokenized sentences and generates the appropriate bigrams and counts them
         """
-        bigram_counts = Counter()
-        for p, words in enumerate(
-                tqdm(tokens, ncols=100, desc='Making and counting Bigrams')):  # tqdm prints a progressbar
-            bigrams: list = []
+        #bigram_counts = Counter()
+        bigrams: list = []
+        for p, words in enumerate(tqdm(tokens, ncols=100, desc='Making and counting Bigrams')):  # tqdm prints a progressbar
             for i in range(len(words) - 1):
                 bigrams.append((words[i], words[i + 1]))
-            bigram_counts += Counter(bigrams)
-        return bigram_counts
+        return Counter(bigrams)
 
     @staticmethod
     def add_sentence_boundaries(tokens: list) -> list:
