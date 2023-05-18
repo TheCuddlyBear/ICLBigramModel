@@ -16,7 +16,7 @@ class BigramModel:
             _unigram_counts = BigramModel.count_unigrams(self.tokens)
             _unigram_counts_tuples = _unigram_counts.most_common(len(_unigram_counts))
             self.unigrams = pd.DataFrame(_unigram_counts_tuples, columns=['unigram', 'count'])
-            self.unigrams.drop(self.unigrams.loc[self.unigrams['unigram'] == '</s>'].index, inplace=True)
+            #self.unigrams.drop(self.unigrams.loc[self.unigrams['unigram'] == '</s>'].index, inplace=True)
             _bigram_counts = BigramModel.make_count_bigrams(self.tokens)
             _bigram_count_tuples = _bigram_counts.most_common(len(_bigram_counts))
             self.bigrams = pd.DataFrame(_bigram_count_tuples, columns=['bigram', 'count'])
@@ -65,7 +65,9 @@ class BigramModel:
         This calculates the perplexity of the given sentence.
         """
         sent_copy = sent.copy()
-        sent_copy.remove('</s>')
+        sent.insert(0, '<s>')
+        sent.append('</s>')
+        #sent_copy.remove('</s>')
         n = len(sent_copy)
         probs = []
         for i in range(n - 1):
@@ -120,12 +122,12 @@ class BigramModel:
         @param tokens: list of tokenized sentences
         Takes a list of tokenized sentences and generates the appropriate unigrams and counts them
         """
-        tot_words: list = []
+        totWords: list = []
         for p, words in enumerate(
                 tqdm(tokens, ncols=100, desc='Making and counting Unigrams')):  # tqdm prints a progressbar
             for word in words:
-                tot_words.append(word)
-        return Counter(tot_words)
+                totWords.append(word)
+        return Counter(totWords)
 
     @staticmethod
     def make_count_bigrams(tokens: list) -> Counter:
@@ -136,7 +138,7 @@ class BigramModel:
         # bigram_counts = Counter()
         bigrams: list = []
         for p, words in enumerate(tqdm(tokens, ncols=100, desc='Making and counting Bigrams')):  # tqdm prints a progressbar
-            words.remove("</s>")
+            #words.remove("</s>")
             for i in range(len(words) - 1):
                 bigrams.append((words[i], words[i + 1]))
         return Counter(bigrams)
