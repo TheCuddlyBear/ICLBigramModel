@@ -8,31 +8,27 @@ import random
 
 
 class BigramModel:
-    def __init__(self, tokens: list, bigram_table=None, unigram_table=None, from_json=False):
-        if tokens == None:
+    def __init__(self, tokens: list):
+        if tokens is None:
             print("Tokens cannot be null!")
         else:
-            self.tokens: list = BigramModel.add_sentence_boundaries(tokens) if not from_json else tokens
-            _unigram_counts = BigramModel.make_count_unigrams(self.tokens) if not from_json else None
-            _unigram_counts_tuples = _unigram_counts.most_common(len(_unigram_counts)) if not from_json else None
-            self.unigram_frequency_table = pd.DataFrame(_unigram_counts_tuples, columns=['unigram',
-                                                                                         'count']) if not from_json else unigram_table
-            self.unigram_frequency_table.drop(
-                self.unigram_frequency_table[self.unigram_frequency_table['unigram'] == '</s>'].index,
-                inplace=True) if not from_json else None
-            _bigram_counts = BigramModel.make_count_bigrams(self.tokens) if not from_json else None
-            _bigram_count_tuples = _bigram_counts.most_common(len(_bigram_counts)) if not from_json else None
-            self.bigram_frequency_table = pd.DataFrame(_bigram_count_tuples,
-                                                       columns=['bigram', 'count']) if not from_json else bigram_table
+            self.tokens: list = BigramModel.add_sentence_boundaries(tokens)
+            _unigram_counts = BigramModel.count_unigrams(self.tokens)
+            _unigram_counts_tuples = _unigram_counts.most_common(len(_unigram_counts))
+            self.unigrams = pd.DataFrame(_unigram_counts_tuples, columns=['unigram', 'count'])
+            self.unigrams.drop(self.unigrams.loc[self.unigrams['unigram'] == '</s>'].index, inplace=True)
+            _bigram_counts = BigramModel.make_count_bigrams(self.tokens)
+            _bigram_count_tuples = _bigram_counts.most_common(len(_bigram_counts))
+            self.bigrams = pd.DataFrame(_bigram_count_tuples, columns=['bigram', 'count'])
 
     def __setstate__(self, state):
-        self.unigram_frequency_table = pd.DataFrame.from_dict(state['unigram_pickle'])
-        self.bigram_frequency_table = pd.DataFrame.from_dict(state['bigram_pickle'])
+        self.unigrams = pd.DataFrame.from_dict(state['unigram_pickle'])
+        self.bigrams = pd.DataFrame.from_dict(state['bigram_pickle'])
         self.tokens = state['tokens']
 
     def __getstate__(self):
-        dict = {'bigram_pickle': self.bigram_frequency_table.to_dict(),
-                'unigram_pickle': self.unigram_frequency_table.to_dict(), 'tokens': self.tokens}
+        dict = {'bigram_pickle': self.bigrams.to_dict(),
+                'unigram_pickle': self.unigrams.to_dict(), 'tokens': self.tokens}
         return dict
 
     def probability(self, w: str, w_n: str, smoothing_constant: float = 0.0):
@@ -45,24 +41,29 @@ class BigramModel:
         bigram: tuple = (w, w_n)
         try:
             bigram_count = \
-                self.bigram_frequency_table.loc[self.bigram_frequency_table['bigram'] == bigram]['count'].tolist()[0]
+                self.bigrams.loc[self.bigrams['bigram'] == bigram]['count'].tolist()[0]
         except:
             return 0.0
         try:
             unigram_count = \
-                self.unigram_frequency_table.loc[self.unigram_frequency_table['unigram'] == w_n]['count'].tolist()[0]
+                self.unigrams.loc[self.unigrams['unigram'] == w_n]['count'].tolist()[0]
         except:
             return 0.0
         if smoothing_constant == 0.0:
             # Locate the bigram or unigram we want the probability of
             return bigram_count / unigram_count
         else:
-            total_words = len(self.unigram_frequency_table)
+            total_words = len(self.unigrams)
             t = bigram_count + smoothing_constant
             n = unigram_count + smoothing_constant * total_words
             return t / n
 
     def perplexity(self, sent: list, smoothing_constant: float = 1.0) -> float:
+        """
+        @param sent: Sentence in the form of a list of tokens
+        @param smoothing_constant: The constant used to apply smoothing
+        This calculates the perplexity of the given sentence.
+        """
         sent_copy = sent.copy()
         sent_copy.remove('</s>')
         n = len(sent_copy)
@@ -75,42 +76,56 @@ class BigramModel:
         return s ** (1 / n)
 
     def choose_successor(self, word: str, smoothing_constant: float = 0.0) -> str | None:
+        """
+        @param word: The word/token for which to generate the successor
+        @param smoothing_constant: The constant used to apply smoothing
+        This function uses the probability function to randomly but based on probabilities
+        choose a successor to the token given.
+        """
         try:
             unigram_count = \
-                self.unigram_frequency_table.loc[self.unigram_frequency_table['unigram'] == word]['count'].tolist()[0]
+                self.unigrams.loc[self.unigrams['unigram'] == word]['count'].tolist()[0]
         except:
             return None
 
         possible_bigrams = \
-            self.bigram_frequency_table[self.bigram_frequency_table['bigram'].apply(lambda x: "the" in x)][
+            self.bigrams[self.bigrams['bigram'].apply(lambda x: x[0] == word)][
                 'bigram'].tolist()
         prob2 = []
         for bigram in tqdm(possible_bigrams, ncols=100, desc=f"Choosing successor for: {word}"):
-            prob2.append(self.probability('the', bigram[1], 0.0))
+            prob2.append(self.probability(word, bigram[1], 0.0))
         successor: tuple = random.choices(possible_bigrams, weights=prob2, k=1)
         return successor[0][1]
 
     def save_model(self, location: str):
+        """
+        @param location: Path to where the model should be stored
+        Uses pickle to store the model into a file to be loaded back in later
+        """
         with open(location, 'wb') as f:
             pickle.dump(self, f)
 
     @staticmethod
     def load_model(location: str):
+        """
+        @param location: Path to where the model is stored
+        Uses to pickle to load a store model back in to e.g. a variable.
+        """
         with open(location, 'rb') as f:
             return pickle.load(f)
 
     @staticmethod
-    def make_count_unigrams(tokens: list) -> Counter:
+    def count_unigrams(tokens: list) -> Counter:
         """
         @param tokens: list of tokenized sentences
         Takes a list of tokenized sentences and generates the appropriate unigrams and counts them
         """
-        totWords: list = []
+        tot_words: list = []
         for p, words in enumerate(
                 tqdm(tokens, ncols=100, desc='Making and counting Unigrams')):  # tqdm prints a progressbar
             for word in words:
-                totWords.append(word)
-        return Counter(totWords)
+                tot_words.append(word)
+        return Counter(tot_words)
 
     @staticmethod
     def make_count_bigrams(tokens: list) -> Counter:
@@ -120,8 +135,8 @@ class BigramModel:
         """
         # bigram_counts = Counter()
         bigrams: list = []
-        for p, words in enumerate(
-                tqdm(tokens, ncols=100, desc='Making and counting Bigrams')):  # tqdm prints a progressbar
+        for p, words in enumerate(tqdm(tokens, ncols=100, desc='Making and counting Bigrams')):  # tqdm prints a progressbar
+            words.remove("</s>")
             for i in range(len(words) - 1):
                 bigrams.append((words[i], words[i + 1]))
         return Counter(bigrams)
