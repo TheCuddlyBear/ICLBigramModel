@@ -16,21 +16,20 @@ class CorpusReader:
         if os.path.isdir(directory):
             self.path = directory
         else:
-            raise ValueError(
-                directory + " does not exist or is not a directory")
+            raise ValueError(directory + " does not exist or is not a directory")
 
     def _get_all_text(self) -> str:
         files = []
-        wordstring = ''
-        for (dirpath, dirnames, filenames) in os.walk(self.path):
+        wordstring = ""
+        for dirpath, dirnames, filenames in os.walk(self.path):
             files.extend(filenames)
             break
-        filtered = [i for i in files if i.endswith('txt')]
+        filtered = [i for i in files if i.endswith("txt")]
         for filename in filtered:
-            path = self.path + '/' + filename
-            with open(path, 'r') as f:
+            path = self.path + "/" + filename
+            with open(path, "r") as f:
                 wordstring += f.read()
-        wordsStringOneLine = wordstring.replace('\n', ' ').replace('  ', ' ')
+        wordsStringOneLine = wordstring.replace("\n", " ").replace("  ", " ")
         return wordsStringOneLine
 
     def sents(self) -> list:
