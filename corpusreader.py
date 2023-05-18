@@ -17,7 +17,8 @@ class CorpusReader:
         if os.path.isdir(directory):
             self.path = directory
         else:
-            raise ValueError(directory + " does not exist or is not a directory")
+            raise ValueError(directory +
+                             " does not exist or is not a directory")
 
     def _get_all_text(self) -> str:
         files = []
