@@ -1,6 +1,7 @@
 import os
 import nltk
 
+
 class CorpusReader:
     """Read the contents of a directory of files, and return the results as
     either a list of lines or a list of words.
@@ -10,11 +11,13 @@ class CorpusReader:
 
     >>> reader = CorpusReader(r"path/to/dir")
     """
+
     def __init__(self, directory: str):
-       if os.path.isdir(directory):
-           self.path = directory
-       else:
-           raise ValueError(directory + " does not exist or is not a directory")
+        if os.path.isdir(directory):
+            self.path = directory
+        else:
+            raise ValueError(
+                directory + " does not exist or is not a directory")
 
     def _get_all_text(self) -> str:
         files = []
@@ -38,7 +41,7 @@ class CorpusReader:
             words = nltk.word_tokenize(i)
             toReturn.append(words)
         return toReturn
-    
+
     def words(self) -> list:
         wordstring = self._get_all_text()
         words = nltk.word_tokenize(wordstring)
