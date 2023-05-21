@@ -44,7 +44,7 @@ class BigramModel:
         if smoothing_constant == 0.0:
             # Locate the bigram or unigram we want the probability of
             if len(bigram_count) != 0 and len(unigram_count) !=0:
-                return math.log(bigram_count[0]) - math.log(unigram_count[0])
+                return bigram_count[0] / unigram_count[0]
             else:
                 return 0.0
         else:
@@ -55,10 +55,12 @@ class BigramModel:
                 unigram_count = 0.0
                 t = bigram_count + smoothing_constant
                 n = unigram_count + smoothing_constant * total_words
+                return t / n
             elif len(bigram_count) != 0 and len(unigram_count) != 0:
                 t = bigram_count[0] + smoothing_constant
                 n = unigram_count[0] + smoothing_constant * total_words
-            return t / n
+                return t / n
+
 
     def perplexity(self, sent: list, smoothing_constant: float = 1.0) -> float:
         """
