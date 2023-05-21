@@ -38,24 +38,29 @@ class BigramModel:
         @param smoothing_constant: the constant with which smoothing is applied
         This function calculates the probability of seeing token w_n after seeing token w
         """
+        global t, n
         bigram: tuple = (w, w_n)
-        try:
-            bigram_count = \
-                self.bigrams.loc[self.bigrams['bigram'] == bigram]['count'].tolist()[0]
-        except:
-            return 0.0
-        try:
-            unigram_count = \
-                self.unigrams.loc[self.unigrams['unigram'] == w_n]['count'].tolist()[0]
-        except:
-            return 0.0
+        bigram_count = \
+                self.bigrams.loc[self.bigrams['bigram'] == bigram]['count'].tolist()
+        unigram_count = \
+                self.unigrams.loc[self.unigrams['unigram'] == w_n]['count'].tolist()
+
         if smoothing_constant == 0.0:
             # Locate the bigram or unigram we want the probability of
-            return bigram_count / unigram_count
+            if len(bigram_count) != 0 and len(unigram_count) !=0:
+                return bigram_count[0] / unigram_count[0]
+            else:
+                return 0.0
         else:
             total_words = len(self.unigrams)
-            t = bigram_count + smoothing_constant
-            n = unigram_count + smoothing_constant * total_words
+            if len(bigram_count) == 0 and len(unigram_count) == 0:
+                bigram_count = 0.0
+                unigram_count = 0.0
+                t = bigram_count + smoothing_constant
+                n = unigram_count + smoothing_constant * total_words
+            elif len(bigram_count) != 0 and len(unigram_count) != 0:
+                t = bigram_count[0] + smoothing_constant
+                n = unigram_count[0] + smoothing_constant * total_words
             return t / n
 
     def perplexity(self, sent: list, smoothing_constant: float = 1.0) -> float:
@@ -64,14 +69,14 @@ class BigramModel:
         @param smoothing_constant: The constant used to apply smoothing
         This calculates the perplexity of the given sentence.
         """
-        sent_copy = sent.copy()
         sent.insert(0, '<s>')
         sent.append('</s>')
+        words = [p.lower() for p in sent if not re.match('\W', p)]
         #sent_copy.remove('</s>')
-        n = len(sent_copy)
+        n = len(sent)
         probs = []
         for i in range(n - 1):
-            probability = self.probability(sent_copy[i], sent_copy[i + 1], smoothing_constant)
+            probability = self.probability(sent[i], sent[i + 1], smoothing_constant)
             q = 1 / probability
             probs.append(q)
         s = math.prod(probs)
