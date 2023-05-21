@@ -38,12 +38,10 @@ class BigramModel:
         @param smoothing_constant: the constant with which smoothing is applied
         This function calculates the probability of seeing token w_n after seeing token w
         """
-        global t, n
         bigram: tuple = (w, w_n)
-        bigram_count = \
-                self.bigrams.loc[self.bigrams['bigram'] == bigram]['count'].tolist()
-        unigram_count = \
-                self.unigrams.loc[self.unigrams['unigram'] == w_n]['count'].tolist()
+        bigram_count = self.bigrams.loc[self.bigrams['bigram'] == bigram]['count'].tolist()
+        unigram_count = self.unigrams.loc[self.unigrams['unigram'] == w_n]['count'].tolist()
+        global t,n
 
         if smoothing_constant == 0.0:
             # Locate the bigram or unigram we want the probability of
@@ -53,6 +51,7 @@ class BigramModel:
                 return 0.0
         else:
             total_words = len(self.unigrams)
+
             if len(bigram_count) == 0 and len(unigram_count) == 0:
                 bigram_count = 0.0
                 unigram_count = 0.0
@@ -69,17 +68,20 @@ class BigramModel:
         @param smoothing_constant: The constant used to apply smoothing
         This calculates the perplexity of the given sentence.
         """
-        sent.insert(0, '<s>')
-        sent.append('</s>')
-        words = [p.lower() for p in sent if not re.match('\W', p)]
-        #sent_copy.remove('</s>')
+        if '<s>' not in sent:
+            sent.insert(0, '<s>')
+            sent.append('</s>')
+            words = [p.lower() for p in sent if not re.match('\W', p)]
         n = len(sent)
         probs = []
         for i in range(n - 1):
             probability = self.probability(sent[i], sent[i + 1], smoothing_constant)
-            q = 1 / probability
+            q = math.log(1 / probability)
             probs.append(q)
-        s = math.prod(probs)
+        try:
+            s = math.exp(sum(probs))
+        except:
+            s = float('inf')
         return s ** (1 / n)
 
     def choose_successor(self, word: str, smoothing_constant: float = 0.0) -> str | None:
