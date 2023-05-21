@@ -6,7 +6,6 @@ from collections import Counter
 from tqdm import tqdm
 import random
 
-
 class BigramModel:
     def __init__(self, tokens: list):
         if tokens is None:
@@ -41,12 +40,11 @@ class BigramModel:
         bigram: tuple = (w, w_n)
         bigram_count = self.bigrams.loc[self.bigrams['bigram'] == bigram]['count'].tolist()
         unigram_count = self.unigrams.loc[self.unigrams['unigram'] == w_n]['count'].tolist()
-        global t,n
 
         if smoothing_constant == 0.0:
             # Locate the bigram or unigram we want the probability of
             if len(bigram_count) != 0 and len(unigram_count) !=0:
-                return bigram_count[0] / unigram_count[0]
+                return math.log(bigram_count[0]) - math.log(unigram_count[0])
             else:
                 return 0.0
         else:
@@ -75,14 +73,11 @@ class BigramModel:
         n = len(sent)
         probs = []
         for i in range(n - 1):
-            probability = self.probability(sent[i], sent[i + 1], smoothing_constant)
-            q = math.log(1 / probability)
+            probability = math.log(self.probability(sent[i], sent[i + 1], smoothing_constant))
+            q = -probability
             probs.append(q)
-        try:
-            s = math.exp(sum(probs))
-        except:
-            s = float('inf')
-        return s ** (1 / n)
+        s = sum(probs)
+        return math.exp(s * (1/n))
 
     def choose_successor(self, word: str, smoothing_constant: float = 0.0) -> str | None:
         """
