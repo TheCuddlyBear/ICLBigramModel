@@ -99,7 +99,7 @@ class BigramModel:
                 'bigram'].tolist()
         prob2 = []
         for bigram in tqdm(possible_bigrams, ncols=100, desc=f"Choosing successor for: {word}"):
-            prob2.append(self.probability(word, bigram[1], 0.0))
+            prob2.append(self.probability(word, bigram[1], smoothing_constant))
         successor: tuple = random.choices(possible_bigrams, weights=prob2, k=1)
         return successor[0][1]
 
